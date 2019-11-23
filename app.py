@@ -30,7 +30,11 @@ app.config['SQLALCHEMY_DATABASE_URI'] = 'postgres://localhost:5432/todo'
 # Models.
 #----------------------------------------------------------------------------#
 
-class Venue(db.Model):
+class JsonModel(object):
+    def as_dict(self):
+       return {c.name: getattr(self, c.name) for c in self.__table__.columns}
+
+class Venue(db.Model, JsonModel):
     __tablename__ = 'Venue'
 
     id = db.Column(db.Integer, primary_key=True)
@@ -48,6 +52,8 @@ class Venue(db.Model):
 
 
     # TODO: implement any missing fields, as a database migration using Flask-Migrate
+
+
 
 class Artist(db.Model):
     __tablename__ = 'Artist'
@@ -104,30 +110,10 @@ def index():
 
 @app.route('/venues')
 def venues():
-  # TODO: replace with real venues data.
-  #       num_shows should be aggregated based on number of upcoming shows per venue.
-  data=[{
-    "city": "San Francisco",
-    "state": "CA",
-    "venues": [{
-      "id": 1,
-      "name": "The Musical Hop",
-      "num_upcoming_shows": 0,
-    }, {
-      "id": 3,
-      "name": "Park Square Live Music & Coffee",
-      "num_upcoming_shows": 1,
-    }]
-  }, {
-    "city": "New York",
-    "state": "NY",
-    "venues": [{
-      "id": 2,
-      "name": "The Dueling Pianos Bar",
-      "num_upcoming_shows": 0,
-    }]
-  }]
-  return render_template('pages/venues.html', areas=data);
+  cities = db.session.query(Venue.city, Venue.state).distinct(Venue.city, Venue.state).all()
+  venues = []
+  for city in cities: venues += db.session.query(Venue).filter(Venue.city == city[0]).filter(Venue.state == city[1]).all()
+  return render_template('pages/venues.html', areas=cities, venues=venues)
 
 @app.route('/venues/search', methods=['POST'])
 def search_venues():
@@ -142,6 +128,8 @@ def search_venues():
       "num_upcoming_shows": 0,
     }]
   }
+  #venue = json.dumps([u.as_dict() for u in Venue.query.all()])
+  #return json.dumps([u.as_dict() for u in Person.query.all()])
   return render_template('pages/search_venues.html', results=response, search_term=request.form.get('search_term', ''))
 
 @app.route('/venues/<int:venue_id>')
