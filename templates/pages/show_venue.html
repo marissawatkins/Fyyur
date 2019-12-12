@@ -74,6 +74,31 @@
 		{% endfor %}
 	</div>
 </section>
+<section>
+	<div class="form-group">
+		<button class="btn btn-default btn-lg" onclick=deleteVenue({{venue.id}})>Delete the venue</button>
+    </div>  
+</section>
+
+{% block javascrip %}
+<script>
+
+function deleteVenue(venue_id){
+	fetch('/venues/'+venue_id , {
+		method: 'DELETE',
+		headers: {'content-type': 'application/json',
+		redirect: true},
+		body: JSON.stringify({id: venue_id})
+		})
+		.then(res => console.log(res))
+		.then(setTimeout(function(){
+		window.location.href = '/venues'
+		}, 1000))
+    }
+</script>
+{% endblock %}
+
+
 
 {% endblock %}
 
